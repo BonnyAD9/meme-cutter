@@ -86,7 +86,7 @@ fn cut_and_save_dir(src: &str, dest: &str, t: u32) -> Option<()> {
 
 fn help() {
     println!(
-"meme-cutter v0 (in development) by BonnyAD9
+"meme-cutter v0 (in development) by {}{}{}
 
 Usage:
   meme-cutter [action] [input] [output] [flags]
@@ -103,5 +103,8 @@ Flags:
     tolerance, value from 0 to 2010 (inclusive), how much different the
     color must be to be left in the image
 "
-    );
+    // BonnyAD9 gradient
+    , "\x1b[38;2;250;50;170mB\x1b[38;2;240;50;180mo\x1b[38;2;230;50;190mn",
+      "\x1b[38;2;220;50;200mn\x1b[38;2;210;50;210my\x1b[38;2;200;50;220mA",
+      "\x1b[38;2;190;50;230mD\x1b[38;2;180;50;240m9\x1b[0m");
 }
