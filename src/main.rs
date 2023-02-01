@@ -7,7 +7,10 @@ pub mod cutter;
 fn main() {
     let args: Vec<_> = env::args().collect();
 
-    if matches!(args[1].to_lowercase().as_str(), "help" | "--help" | "-h" | "-?") {
+    if matches!(
+            args[1].to_lowercase().as_str(),
+            "help" | "--help" | "-h" | "-?"
+        ) {
         help();
         return;
     }
@@ -36,11 +39,17 @@ fn main() {
 
                 t = t_str.parse().unwrap_or(u32::MAX);
                 if t == u32::MAX {
-                    println!("Invalid tolerance value '{}' (argument '{}'), expected number", t_str, a);
+                    println!(
+                        "Invalid tolerance value '{}' (argument '{}'), \
+                        expected number", t_str, a
+                    );
                     return;
                 }
                 if t > 1020 {
-                    println!("Invalid tolerance value '{}' (argument '{}'), value must be smaller than 1020", t_str, a);
+                    println!(
+                        "Invalid tolerance value '{}' (argument '{}'), \
+                        value must be smaller than 1020", t_str, a
+                    );
                     return;
                 }
             }
@@ -103,7 +112,7 @@ Flags:
     tolerance, value from 0 to 2010 (inclusive), how much different the
     color must be to be left in the image
 "
-    // BonnyAD9 gradient
+    // BonnyAD9 gradient in 3 strings
     , "\x1b[38;2;250;50;170mB\x1b[38;2;240;50;180mo\x1b[38;2;230;50;190mn",
       "\x1b[38;2;220;50;200mn\x1b[38;2;210;50;210my\x1b[38;2;200;50;220mA",
       "\x1b[38;2;190;50;230mD\x1b[38;2;180;50;240m9\x1b[0m");

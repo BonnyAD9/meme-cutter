@@ -81,15 +81,25 @@ fn img_column(img: &RgbaImage) -> ColImgIterator {
 
 // cutting logic
 
-pub fn get_cut<'i>(img: &'i RgbaImage, t: u32) -> Option<SubImage<&'i RgbaImage>> {
+pub fn get_cut<'i>(
+    img: &'i RgbaImage,
+    t: u32
+) -> Option<SubImage<&'i RgbaImage>> {
     if t > 1020 {
         panic!("t cannot be larger than 1020");
     }
 
-    let top = img.rows().position(|l| has_content(l, t))? as u32;
-    let bot = img.height() - img.rows().rev().position(|l| has_content(l, t))? as u32;
-    let left = img_column(img).position(|l| has_content(l, t))? as u32;
-    let right = img.width() - img_column(img).rev().position(|l| has_content(l, t))? as u32;
+    let top = img.rows()
+        .position(|l| has_content(l, t))? as u32;
+
+    let bot = img.height() - img.rows().rev()
+        .position(|l| has_content(l, t))? as u32;
+
+    let left = img_column(img)
+        .position(|l| has_content(l, t))? as u32;
+
+    let right = img.width() - img_column(img).rev()
+        .position(|l| has_content(l, t))? as u32;
 
     if left >= right || top >= bot {
         None
@@ -98,7 +108,10 @@ pub fn get_cut<'i>(img: &'i RgbaImage, t: u32) -> Option<SubImage<&'i RgbaImage>
     }
 }
 
-fn has_content<'a, I: Iterator<Item = &'a Rgba<u8>> + Clone>(px: I, t: u32) -> bool {
+fn has_content<'a, I: Iterator<Item = &'a Rgba<u8>> + Clone>(
+    px: I,
+    t: u32
+) -> bool {
     let t = t as f64;
     let mut sums = [0; 4];
 
@@ -114,7 +127,10 @@ fn has_content<'a, I: Iterator<Item = &'a Rgba<u8>> + Clone>(px: I, t: u32) -> b
     let avgs = sums.map(|p| (p as f64) / len);
 
     for p in px.clone() {
-        if avgs.iter().zip(p.0).fold(0.0, |s, (a, c)| s + (a - (c as f64)).abs()) > t {
+        if avgs.iter().zip(p.0)
+            .fold(0.0, |s, (a, c)| s + (a - (c as f64)).abs())
+            > t
+        {
             return true;
         }
     };
