@@ -7,27 +7,60 @@ pub mod cutter;
 fn main() {
     let args: Vec<_> = env::args().collect();
 
-    if matches!(args[0].to_lowercase().as_str(), "help" | "--help" | "-h" | "-?") {
+    if matches!(args[1].to_lowercase().as_str(), "help" | "--help" | "-h" | "-?") {
         help();
         return;
     }
 
     if args.len() != 4 {
         println!("Invalid number of arguments");
-    }
-
-    let command = args[1].as_str();
-
-    if command.to_lowercase() != "file" {
-        println!("Invalid command {}", command);
         return;
     }
 
+    let command = args[1].to_lowercase();
+    let command = command.as_str();
     let src = args[2].as_str();
     let dest = args[3].as_str();
-    let t = 30;
+    let mut t = 30;
 
-    match cut_and_save(src, dest, t) {
+    let mut it = args[4..].iter();
+    while let Some(a) = it.next() {
+        match a.to_lowercase().as_str() {
+            "-t" | "--tolerance" => {
+                let t_str: &str = if let Some(t_s) = it.next() {
+                    t_s.as_str()
+                } else {
+                    println!("Missing tolerance value (argument '{}')", a);
+                    return;
+                };
+
+                t = t_str.parse().unwrap_or(u32::MAX);
+                if t == u32::MAX {
+                    println!("Invalid tolerance value '{}' (argument '{}'), expected number", t_str, a);
+                    return;
+                }
+                if t > 1020 {
+                    println!("Invalid tolerance value '{}' (argument '{}'), value must be smaller than 1020", t_str, a);
+                    return;
+                }
+            }
+            _ => {
+                println!("Invalid argument '{}'", a);
+                return;
+            }
+        }
+    }
+
+    let res = match command {
+        "file" => cut_and_save(src, dest, t),
+        "directory" => cut_and_save_dir(src, dest, t),
+        _ => {
+            println!("Invalid action '{}'", command);
+            return;
+        }
+    };
+
+    match res {
         None => {
             println!("Cannot complete oparation");
             return;
@@ -47,6 +80,28 @@ fn cut_and_save(src: &str, dest: &str, t: u32) -> Option<()> {
     Some(())
 }
 
-fn help() {
+fn cut_and_save_dir(src: &str, dest: &str, t: u32) -> Option<()> {
+    None
+}
 
+fn help() {
+    println!(
+"meme-cutter v0 (in development) by BonnyAD9
+
+Usage:
+  meme-cutter [action] [input] [output] [flags]
+
+Actions:
+  help
+    displays this help
+
+  file
+    cut single image file
+
+Flags:
+  -t  --tolerance
+    tolerance, value from 0 to 2010 (inclusive), how much different the
+    color must be to be left in the image
+"
+    );
 }
