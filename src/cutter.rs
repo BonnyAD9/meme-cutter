@@ -2,6 +2,7 @@ use image::{SubImage, RgbaImage, imageops, Rgba};
 
 // making column iterator for image
 
+// iterating over single column
 struct ImgColIterator<'a> {
     img: &'a RgbaImage,
     pos: u32,
@@ -33,6 +34,7 @@ impl<'a> ImgColIterator<'a> {
     }
 }
 
+// iterating over all the columns
 struct ColImgIterator<'a> {
     img: &'a RgbaImage,
     pos: u32
@@ -79,17 +81,21 @@ fn img_column(img: &RgbaImage) -> ColImgIterator {
 
 // cutting logic
 
-pub fn get_cut<'i>(img: &'i RgbaImage, t: u32) -> SubImage<&'i RgbaImage> {
+pub fn get_cut<'i>(img: &'i RgbaImage, t: u32) -> Option<SubImage<&'i RgbaImage>> {
     if t > 1020 {
         panic!("t cannot be larger than 1020");
     }
 
-    let top = img.rows().position(|l| has_content(l, t)).unwrap() as u32;
-    let bot = img.height() - img.rows().rev().position(|l| has_content(l, t)).unwrap() as u32;
-    let left = img_column(img).position(|l| has_content(l, t)).unwrap() as u32;
-    let right = img.width() - img_column(img).rev().position(|l| has_content(l, t)).unwrap() as u32;
+    let top = img.rows().position(|l| has_content(l, t))? as u32;
+    let bot = img.height() - img.rows().rev().position(|l| has_content(l, t))? as u32;
+    let left = img_column(img).position(|l| has_content(l, t))? as u32;
+    let right = img.width() - img_column(img).rev().position(|l| has_content(l, t))? as u32;
 
-    imageops::crop_imm(img, left, top, right - left, bot - top)
+    if left >= right || top >= bot {
+        None
+    } else {
+        Some(imageops::crop_imm(img, left, top, right - left, bot - top))
+    }
 }
 
 fn has_content<'a, I: Iterator<Item = &'a Rgba<u8>> + Clone>(px: I, t: u32) -> bool {
