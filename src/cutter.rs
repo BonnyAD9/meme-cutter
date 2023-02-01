@@ -1,4 +1,4 @@
-use image::{SubImage, RgbaImage, imageops, Rgba};
+use image::{imageops, Rgba, RgbaImage, SubImage};
 
 // making column iterator for image
 
@@ -6,7 +6,7 @@ use image::{SubImage, RgbaImage, imageops, Rgba};
 struct ImgColIterator<'a> {
     img: &'a RgbaImage,
     pos: u32,
-    x: u32
+    x: u32,
 }
 
 impl<'a> Iterator for ImgColIterator<'a> {
@@ -24,20 +24,28 @@ impl<'a> Iterator for ImgColIterator<'a> {
 
 impl<'a> Clone for ImgColIterator<'a> {
     fn clone(&self) -> Self {
-        ImgColIterator { img: self.img, pos: self.pos, x: self.x }
+        ImgColIterator {
+            img: self.img,
+            pos: self.pos,
+            x: self.x,
+        }
     }
 }
 
 impl<'a> ImgColIterator<'a> {
     fn new(img: &'a RgbaImage, x: u32) -> Self {
-        ImgColIterator { img: img, pos: 0, x: x }
+        ImgColIterator {
+            img: img,
+            pos: 0,
+            x: x,
+        }
     }
 }
 
 // iterating over all the columns
 struct ColImgIterator<'a> {
     img: &'a RgbaImage,
-    pos: u32
+    pos: u32,
 }
 
 impl<'a> Iterator for ColImgIterator<'a> {
@@ -57,7 +65,10 @@ impl<'a> Iterator for ColImgIterator<'a> {
 }
 impl<'a> ColImgIterator<'a> {
     fn new(img: &'a RgbaImage) -> ColImgIterator {
-        ColImgIterator { img: img, pos: u32::MAX }
+        ColImgIterator {
+            img: img,
+            pos: u32::MAX,
+        }
     }
 }
 
@@ -83,23 +94,21 @@ fn img_column(img: &RgbaImage) -> ColImgIterator {
 
 pub fn get_cut<'i>(
     img: &'i RgbaImage,
-    t: u32
+    t: u32,
 ) -> Option<SubImage<&'i RgbaImage>> {
     if t > 1020 {
         panic!("t cannot be larger than 1020");
     }
 
-    let top = img.rows()
-        .position(|l| has_content(l, t))? as u32;
+    let top = img.rows().position(|l| has_content(l, t))? as u32;
 
-    let bot = img.height() - img.rows().rev()
-        .position(|l| has_content(l, t))? as u32;
+    let bot = img.height()
+        - img.rows().rev().position(|l| has_content(l, t))? as u32;
 
-    let left = img_column(img)
-        .position(|l| has_content(l, t))? as u32;
+    let left = img_column(img).position(|l| has_content(l, t))? as u32;
 
-    let right = img.width() - img_column(img).rev()
-        .position(|l| has_content(l, t))? as u32;
+    let right = img.width()
+        - img_column(img).rev().position(|l| has_content(l, t))? as u32;
 
     if left >= right || top >= bot {
         None
@@ -110,7 +119,7 @@ pub fn get_cut<'i>(
 
 fn has_content<'a, I: Iterator<Item = &'a Rgba<u8>> + Clone>(
     px: I,
-    t: u32
+    t: u32,
 ) -> bool {
     let t = t as f64;
     let mut sums = [0; 4];
@@ -122,18 +131,20 @@ fn has_content<'a, I: Iterator<Item = &'a Rgba<u8>> + Clone>(
             *s += o as u32;
         }
         len += 1.;
-    };
+    }
 
     let avgs = sums.map(|p| (p as f64) / len);
 
     for p in px.clone() {
-        if avgs.iter().zip(p.0)
+        if avgs
+            .iter()
+            .zip(p.0)
             .fold(0.0, |s, (a, c)| s + (a - (c as f64)).abs())
             > t
         {
             return true;
         }
-    };
+    }
 
     false
 }
