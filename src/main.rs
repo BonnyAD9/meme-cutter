@@ -147,11 +147,15 @@ Actions:
     displays this help
 
   file
-    cut single image file
+    cut single image file ([input] and [output] must be files)
+
+  directory
+    cut all files in a directory into another directory ([input] and [output]
+    must be directories)
 
 Flags:
   -t  --tolerance
-    tolerance, value from 0 to 2010 (inclusive), how much different the
+    tolerance, value from 0 to 1020 (inclusive), how much different the
     color must be to be left in the image
 ", // BonnyAD9 gradient in 3 strings
         "\x1b[38;2;250;50;170mB\x1b[38;2;240;50;180mo\x1b[38;2;230;50;190mn",
