@@ -1,6 +1,6 @@
 use cutter::get_cut;
-use image::{io::Reader as ImageReader, GenericImageView};
-use std::{env, fs, path::Path, io::Write, sync::Arc};
+use image::{io::Reader as ImageReader};
+use std::{env, fs, io::Write, path::Path};
 
 pub mod cutter;
 
@@ -104,7 +104,7 @@ fn cut_and_save_dir(src: &str, dest: &str, t: u32) -> Option<()> {
                 if ft.is_dir() {
                     continue;
                 }
-            },
+            }
             _ => continue,
         }
 
