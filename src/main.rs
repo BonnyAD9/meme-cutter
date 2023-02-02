@@ -1,5 +1,5 @@
 use cutter::get_cut;
-use image::{io::Reader as ImageReader};
+use image::io::Reader as ImageReader;
 use std::{env, fs, io::Write, path::Path};
 
 pub mod cutter;
@@ -7,10 +7,12 @@ pub mod cutter;
 fn main() {
     let args: Vec<_> = env::args().collect();
 
-    if args.len() < 2 || matches!(
-        args[1].to_lowercase().as_str(),
-        "help" | "--help" | "-h" | "-?"
-    ) {
+    if args.len() < 2
+        || matches!(
+            args[1].to_lowercase().as_str(),
+            "help" | "--help" | "-h" | "-?"
+        )
+    {
         help();
         return;
     }

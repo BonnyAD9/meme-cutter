@@ -1,10 +1,10 @@
-use image::{imageops, Rgba, SubImage, DynamicImage, GenericImageView};
+use image::{imageops, DynamicImage, GenericImageView, Rgba, SubImage};
 use Direction::{Horizontal, Vertical};
 
 // making iterator for the image
 enum Direction {
     Horizontal,
-    Vertical
+    Vertical,
 }
 
 struct ImgLineIterator<'a> {
@@ -73,7 +73,7 @@ impl<'a> ImgLineIterator<'a> {
         img: &'a DynamicImage,
         x: u32,
         y: u32,
-        direction: Direction
+        direction: Direction,
     ) -> Self {
         match direction {
             Horizontal => ImgLineIterator {
@@ -89,7 +89,7 @@ impl<'a> ImgLineIterator<'a> {
                 y: u32::MAX,
                 xadd: 0,
                 yadd: 1,
-            }
+            },
         }
     }
 }
@@ -97,7 +97,7 @@ impl<'a> ImgLineIterator<'a> {
 fn img_iter(
     img: &DynamicImage,
     direction: Direction,
-    p: u32
+    p: u32,
 ) -> ImgLineIterator {
     ImgLineIterator::new(img, p, p, direction)
 }
@@ -118,9 +118,9 @@ pub fn get_cut<'i>(
 
     let bot = img.height()
         - (0..img.height())
-        .rev()
-        .map(|n| img_iter(img, Horizontal, n))
-        .position(|l| has_content(l, t))? as u32;
+            .rev()
+            .map(|n| img_iter(img, Horizontal, n))
+            .position(|l| has_content(l, t))? as u32;
 
     let left = (0..img.width())
         .map(|n| img_iter(img, Vertical, n))
@@ -128,9 +128,9 @@ pub fn get_cut<'i>(
 
     let right = img.width()
         - (0..img.width())
-        .rev()
-        .map(|n| img_iter(img, Vertical, n))
-        .position(|l| has_content(l, t))? as u32;
+            .rev()
+            .map(|n| img_iter(img, Vertical, n))
+            .position(|l| has_content(l, t))? as u32;
 
     if left >= right || top >= bot {
         None
@@ -139,10 +139,7 @@ pub fn get_cut<'i>(
     }
 }
 
-fn has_content<I: Iterator<Item = Rgba<u8>> + Clone>(
-    px: I,
-    t: u32,
-) -> bool {
+fn has_content<I: Iterator<Item = Rgba<u8>> + Clone>(px: I, t: u32) -> bool {
     let t = t as f64;
     let mut sums = [0; 4];
 
