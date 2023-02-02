@@ -7,7 +7,7 @@ pub mod cutter;
 fn main() {
     let args: Vec<_> = env::args().collect();
 
-    if matches!(
+    if args.len() < 2 || matches!(
         args[1].to_lowercase().as_str(),
         "help" | "--help" | "-h" | "-?"
     ) {
@@ -136,7 +136,7 @@ fn cut_and_save_dir(src: &str, dest: &str, t: u32) -> Option<()> {
 
 fn help() {
     println!(
-        "meme-cutter v0 (in development) by {}{}{}
+        "meme-cutter v1.0.0 by {}{}{}
 
 Usage:
   meme-cutter [action] [input] [output] [flags]
