@@ -1,114 +1,136 @@
-use image::{imageops, Rgba, RgbaImage, SubImage};
+use image::{imageops, Rgba, SubImage, DynamicImage, GenericImageView};
+use Direction::{Horizontal, Vertical};
 
-// making column iterator for image
+// making iterator for the image
+enum Direction {
+    Horizontal,
+    Vertical
+}
 
-// iterating over single column
-struct ImgColIterator<'a> {
-    img: &'a RgbaImage,
-    pos: u32,
+struct ImgLineIterator<'a> {
+    img: &'a DynamicImage,
+    y: u32,
     x: u32,
+    xadd: u32,
+    yadd: u32,
 }
 
-impl<'a> Iterator for ImgColIterator<'a> {
-    type Item = &'a Rgba<u8>;
+impl<'a> Iterator for ImgLineIterator<'a> {
+    type Item = Rgba<u8>;
 
-    fn next(&mut self) -> Option<&'a Rgba<u8>> {
-        if self.pos == self.img.height() {
+    fn next(&mut self) -> Option<Rgba<u8>> {
+        if self.x == u32::MAX {
+            self.x = 0;
+        }
+        if self.y == u32::MAX {
+            self.y = 0;
+        }
+        if self.y + self.yadd > self.img.height()
+            || self.x + self.xadd > self.img.width()
+        {
             Option::None
         } else {
-            self.pos += 1;
-            Option::Some(&self.img[(self.x, self.pos - 1)])
+            let res = Option::Some(self.img.get_pixel(self.x, self.y));
+            self.x += self.xadd;
+            self.y += self.yadd;
+            res
         }
     }
 }
 
-impl<'a> Clone for ImgColIterator<'a> {
+impl<'a> DoubleEndedIterator for ImgLineIterator<'a> {
+    fn next_back(&mut self) -> Option<Rgba<u8>> {
+        if self.x == u32::MAX {
+            self.x = self.img.width();
+        }
+        if self.y == u32::MAX {
+            self.y = self.img.height();
+        }
+        if self.y - self.yadd == 0 || self.x - self.xadd == 0 {
+            Option::None
+        } else {
+            self.x -= self.xadd;
+            self.y -= self.yadd;
+            Option::Some(self.img.get_pixel(self.x, self.y))
+        }
+    }
+}
+
+impl<'a> Clone for ImgLineIterator<'a> {
     fn clone(&self) -> Self {
-        ImgColIterator {
+        ImgLineIterator {
             img: self.img,
-            pos: self.pos,
+            y: self.y,
             x: self.x,
+            xadd: self.xadd,
+            yadd: self.yadd,
         }
     }
 }
 
-impl<'a> ImgColIterator<'a> {
-    fn new(img: &'a RgbaImage, x: u32) -> Self {
-        ImgColIterator {
-            img: img,
-            pos: 0,
-            x: x,
+impl<'a> ImgLineIterator<'a> {
+    fn new(
+        img: &'a DynamicImage,
+        x: u32,
+        y: u32,
+        direction: Direction
+    ) -> Self {
+        match direction {
+            Horizontal => ImgLineIterator {
+                img,
+                x: u32::MAX,
+                y,
+                xadd: 1,
+                yadd: 0,
+            },
+            Vertical => ImgLineIterator {
+                img,
+                x,
+                y: u32::MAX,
+                xadd: 0,
+                yadd: 1,
+            }
         }
     }
 }
 
-// iterating over all the columns
-struct ColImgIterator<'a> {
-    img: &'a RgbaImage,
-    pos: u32,
-}
-
-impl<'a> Iterator for ColImgIterator<'a> {
-    type Item = ImgColIterator<'a>;
-
-    fn next(&mut self) -> Option<ImgColIterator<'a>> {
-        if self.pos == u32::MAX {
-            self.pos = 0
-        }
-        if self.pos == self.img.width() {
-            Option::None
-        } else {
-            self.pos += 1;
-            Some(ImgColIterator::new(self.img, self.pos - 1))
-        }
-    }
-}
-impl<'a> ColImgIterator<'a> {
-    fn new(img: &'a RgbaImage) -> ColImgIterator {
-        ColImgIterator {
-            img: img,
-            pos: u32::MAX,
-        }
-    }
-}
-
-impl<'a> DoubleEndedIterator for ColImgIterator<'a> {
-    fn next_back(&mut self) -> Option<ImgColIterator<'a>> {
-        if self.pos == u32::MAX {
-            self.pos = self.img.width();
-        }
-        if self.pos == 0 {
-            Option::None
-        } else {
-            self.pos -= 1;
-            Some(ImgColIterator::new(self.img, self.pos))
-        }
-    }
-}
-
-fn img_column(img: &RgbaImage) -> ColImgIterator {
-    ColImgIterator::new(img)
+fn img_iter(
+    img: &DynamicImage,
+    direction: Direction,
+    p: u32
+) -> ImgLineIterator {
+    ImgLineIterator::new(img, p, p, direction)
 }
 
 // cutting logic
 
 pub fn get_cut<'i>(
-    img: &'i RgbaImage,
+    img: &'i DynamicImage,
     t: u32,
-) -> Option<SubImage<&'i RgbaImage>> {
+) -> Option<SubImage<&'i DynamicImage>> {
     if t > 1020 {
         panic!("t cannot be larger than 1020");
     }
 
-    let top = img.rows().position(|l| has_content(l, t))? as u32;
+    let top = (0..img.height())
+        .map(|n| img_iter(img, Horizontal, n))
+        .position(|l| has_content(l, t))? as u32;
 
     let bot = img.height()
-        - img.rows().rev().position(|l| has_content(l, t))? as u32;
+        - (0..img.height())
+        .rev()
+        .map(|n| img_iter(img, Horizontal, n))
+        .position(|l| has_content(l, t))? as u32;
 
-    let left = img_column(img).position(|l| has_content(l, t))? as u32;
+    let left = (0..img.width())
+        .map(|n| img_iter(img, Vertical, n))
+        .position(|l| has_content(l, t))? as u32;
 
     let right = img.width()
-        - img_column(img).rev().position(|l| has_content(l, t))? as u32;
+        - (0..img.width())
+        .rev()
+        .map(|n| img_iter(img, Vertical, n))
+        .position(|l| has_content(l, t))? as u32;
 
     if left >= right || top >= bot {
         None
@@ -117,7 +139,7 @@ pub fn get_cut<'i>(
     }
 }
 
-fn has_content<'a, I: Iterator<Item = &'a Rgba<u8>> + Clone>(
+fn has_content<I: Iterator<Item = Rgba<u8>> + Clone>(
     px: I,
     t: u32,
 ) -> bool {

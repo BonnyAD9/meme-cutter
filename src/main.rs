@@ -83,8 +83,7 @@ fn main() {
 fn cut_and_save(src: &str, dest: &str, t: u32) -> Option<()> {
     let img = ImageReader::open(src).ok()?.decode().ok()?;
 
-    // TODO: optimize get_cut to work on any generic image type
-    get_cut(&img.to_rgba8(), t)?.to_image().save(dest).ok()?;
+    get_cut(&img, t)?.to_image().save(dest).ok()?;
 
     Some(())
 }
