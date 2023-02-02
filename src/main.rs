@@ -1,6 +1,6 @@
 use cutter::get_cut;
-use image::io::Reader as ImageReader;
-use std::env;
+use image::{io::Reader as ImageReader, GenericImageView};
+use std::{env, fs, path::Path, io::Write, sync::Arc};
 
 pub mod cutter;
 
@@ -15,7 +15,7 @@ fn main() {
         return;
     }
 
-    if args.len() != 4 {
+    if args.len() < 4 {
         println!("Invalid number of arguments");
         return;
     }
@@ -83,13 +83,56 @@ fn main() {
 fn cut_and_save(src: &str, dest: &str, t: u32) -> Option<()> {
     let img = ImageReader::open(src).ok()?.decode().ok()?;
 
-    get_cut(img.as_rgba8()?, t)?.to_image().save(dest).ok()?;
+    // TODO: optimize get_cut to work on any generic image type
+    get_cut(&img.to_rgba8(), t)?.to_image().save(dest).ok()?;
 
     Some(())
 }
 
 fn cut_and_save_dir(src: &str, dest: &str, t: u32) -> Option<()> {
-    None
+    let files = fs::read_dir(src).ok()?;
+    fs::create_dir_all(dest).ok()?;
+
+    for f in files {
+        let f = match f {
+            Ok(f) => f,
+            _ => continue,
+        };
+
+        match f.file_type() {
+            Ok(ft) => {
+                if ft.is_dir() {
+                    continue;
+                }
+            },
+            _ => continue,
+        }
+
+        let src = f.path();
+        let src = match src.to_str() {
+            Some(s) => s,
+            _ => continue,
+        };
+
+        let dest = match f.file_name().to_str() {
+            Some(s) => Path::new(dest).join(s),
+            _ => continue,
+        };
+
+        let dest = match dest.to_str() {
+            Some(s) => s,
+            _ => continue,
+        };
+
+        print!("Cutting {}... ", src);
+        _ = std::io::stdout().flush();
+        match cut_and_save(src, dest, t) {
+            Some(_) => println!("Done!"),
+            None => println!("Failed!"),
+        };
+    }
+
+    Some(())
 }
 
 fn help() {
